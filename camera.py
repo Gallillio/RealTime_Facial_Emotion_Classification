@@ -17,6 +17,7 @@ import tensorflow as tf
 # from tensorflow.keras.utils import to_categorical, plot_model
 # from keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input
 # from skimage.transform import resize
+import h5py
 from tensorflow.keras.models import load_model
 # from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 # from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, classification_report
@@ -31,7 +32,19 @@ class VideoCamera(object):
         self.video = cv2.VideoCapture(0)
 
         self.emotion_dict = {0: "Angry", 1: "Disgusted", 2: "Fearful", 3: "Happy", 4: "Neutral", 5: "Sad", 6: "Surprised"}
-        self.emotion_model = load_model(r'model_checkpoints/mobilenet-adam-loss_0.6024-accuracy_0.8719.h5',compile=False)
+        
+        # Load the model configuration in read-only mode
+        with h5py.File("model_checkpoints/mobilenet-sgd-loss_0.6980-accuracy_0.8534.h5", "r") as f:
+            model_config = f.attrs.get("model_config")
+            # If the model_config is bytes, you can decode it; otherwise, it's already a string.
+            if isinstance(model_config, bytes):
+                model_config = model_config.decode("utf-8")
+            if '"groups": 1,' in model_config:
+                model_config = model_config.replace('"groups": 1,', '')
+                # If needed, encode it back if your environment expects bytes
+                # Note: You cannot modify the file in read-only mode, so this line is removed.
+        
+        self.emotion_model = load_model("model_checkpoints/mobilenet-sgd-loss_0.6980-accuracy_0.8534.h5", compile=False)
 
     def __del__(self):
         self.video.release()
@@ -83,7 +96,7 @@ class VideoCamera(object):
             cropped_img = np.expand_dims(np.expand_dims(cv2.resize(roi_gray_frame, (96,96)), -1), 0)
             cropped_img_rgb = np.concatenate([cropped_img, cropped_img, cropped_img], axis=-1)
             # predict the emotions
-            emotion_prediction = self.emotion_model.predict(cropped_img_rgb)
+            emotion_prediction = self.emotion_model.predict(cropped_img_rgb, verbose=0)
     #         print(emotion_prediction)
             maxindex = int(np.argmax(emotion_prediction))
             cv2.putText(frame, self.emotion_dict[maxindex], (x+5, y-20), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
