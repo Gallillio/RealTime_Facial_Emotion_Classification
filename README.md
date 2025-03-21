@@ -14,17 +14,7 @@ To run this project, you need the following Python packages:
 
 You can install these dependencies using the provided `requirements.txt` file.
 
-### Requirements File
 
-Create a `requirements.txt` file with the following content:
-
-```
-Flask==2.0.3
-opencv-python==4.5.3.20210927
-tensorflow==2.6.0
-h5py==3.1.0
-numpy==1.21.2
-```
 
 ## Setup Instructions
 
